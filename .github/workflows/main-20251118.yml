@@ -1,0 +1,102 @@
+name: Build Lockpick_RCM Chinese - 20251118
+
+on:
+  push:
+    branches: [ main, master ]
+
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4.1.1
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+        submodules: recursive
+
+    - name: Fix git dubious ownership
+      run: |
+        git config --global --add safe.directory ${{ github.workspace }}
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
+      shell: bash
+
+    - name: Setup environment
+      run: |
+        echo "DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
+        echo "DEVKITARM=/opt/devkitpro/devkitARM" >> $GITHUB_ENV
+        echo "/opt/devkitpro/devkitARM/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Extract version from Makefile (Versions.inc)
+      run: |
+        LP_MAJOR=$(awk '/^LPVERSION_MAJOR :=/ {print $3}' Versions.inc)
+        LP_MINOR=$(awk '/^LPVERSION_MINOR :=/ {print $3}' Versions.inc)
+        LP_BUGFX=$(awk '/^LPVERSION_BUGFX :=/ {print $3}' Versions.inc)
+        APP_VERSION="${LP_MAJOR}.${LP_MINOR}.${LP_BUGFX}"
+        echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_ENV
+        echo "TAG=v${APP_VERSION}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Build project
+      run: |
+        make clean
+        make all -j$(nproc)
+      shell: bash
+
+    - name: Check build results
+      run: |
+        echo "Build completed successfully!"
+        ls -la output/
+        wc -c output/*.bin
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Lockpick_RCM v${{ env.APP_VERSION }}
+        path: |
+          output/Lockpick_RCM.bin
+          output/Lockpick_RCM_unc.bin
+        retention-days: 30
+
+    - name: Create/Update Release
+      uses: softprops/action-gh-release@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        files: |
+          output/Lockpick_RCM.bin
+          output/Lockpick_RCM_unc.bin
+        name: Lockpick_RCM v${{ env.APP_VERSION }}
+        tag_name: ${{ env.TAG }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        make_latest: true
+        body: |
+          ## Lockpick_RCM v${{ env.APP_VERSION }}
+          
+          ### 🌏 特性
+          - 完整的中文用户界面
+          - 所有错误信息已翻译为中文
+          - 启用中文字体支持
+          
+          ### 📁 文件说明
+          - `Lockpick_RCM.bin` - 压缩后的payload（用于注入）
+          - `Lockpick_RCM_unc.bin` - 未压缩的payload
+          
+          ### 🔧 构建信息
+          - 版本号：v${{ env.APP_VERSION }}（来自 Makefile Versions.inc）
+          - 构建触发：${{ github.event_name }}
+          
+          ---
+          使用 GitHub Actions 构建 ❤️
