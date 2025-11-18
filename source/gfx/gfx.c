@@ -19,6 +19,9 @@
 #include <stdarg.h>
 #include <string.h>
 #include "gfx.h"
+#ifdef ENABLE_CHINESE_FONT
+#include "gfx_chinese.h"
+#endif
 
 // Global gfx console and context.
 gfx_ctxt_t gfx_ctxt;
@@ -237,6 +240,32 @@ void gfx_putc(char c)
 			if (gfx_con.y > gfx_ctxt.height - 16)
 				gfx_con.y = 0;
 		}
+#ifdef ENABLE_CHINESE_FONT
+		else if (is_chinese_char((u16)c))
+		{
+			const u8 *cbuf = get_chinese_char_data((u16)c);
+			u32 *fb = gfx_ctxt.fb + gfx_con.x + gfx_con.y * gfx_ctxt.stride;
+			for (u32 i = 0; i < 16; i++)
+			{
+				for (u32 j = 0; j < 16; j++)
+				{
+					u8 val = cbuf[(i * 2) + (j < 8 ? 0 : 1)];
+					if (val & (0x80 >> (j % 8)))
+						*fb = gfx_con.fgcol;
+					else if (gfx_con.fillbg)
+						*fb = gfx_con.bgcol;
+					fb++;
+				}
+				fb += gfx_ctxt.stride - 16;
+			}
+			gfx_con.x += 16;
+			if (gfx_con.x > gfx_ctxt.width - 16)
+			{
+				gfx_con.x = 0;
+				gfx_con.y += 16;
+			}
+		}
+#endif
 		break;
 	case 8:
 	default:
@@ -272,6 +301,32 @@ void gfx_putc(char c)
 			if (gfx_con.y > gfx_ctxt.height - 8)
 				gfx_con.y = 0;
 		}
+#ifdef ENABLE_CHINESE_FONT
+		else if (is_chinese_char((u16)c))
+		{
+			const u8 *cbuf = get_chinese_char_data((u16)c);
+			u32 *fb = gfx_ctxt.fb + gfx_con.x + gfx_con.y * gfx_ctxt.stride;
+			for (u32 i = 0; i < 8; i++)
+			{
+				for (u32 j = 0; j < 16; j++)
+				{
+					u8 val = cbuf[(i * 2) + (j < 8 ? 0 : 1)];
+					if (val & (0x80 >> (j % 8)))
+						*fb = gfx_con.fgcol;
+					else if (gfx_con.fillbg)
+						*fb = gfx_con.bgcol;
+					fb++;
+				}
+				fb += gfx_ctxt.stride - 16;
+			}
+			gfx_con.x += 16;
+			if (gfx_con.x > gfx_ctxt.width - 16)
+			{
+				gfx_con.x = 0;
+				gfx_con.y += 8;
+			}
+		}
+#endif
 		break;
 	}
 }

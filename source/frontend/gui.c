@@ -84,8 +84,13 @@ int save_fb_to_bmp()
 
 	char path[0x80] = "sd:/switch/lockpick_rcm.bmp";
 
-	// Save screenshot and log.
+		// 保存截图并记录。
 	int res = sd_save_to_file(bitmap, file_size, path);
+
+	if (res == 0)
+		gfx_printf("%k截图已保存到: %s\n", COLOR_GREEN, path);
+	else
+		gfx_printf("%k无法保存截图。\n", COLOR_RED);
 
 	// sd_unmount();
 

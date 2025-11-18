@@ -48,7 +48,7 @@ void tui_sbar(bool force_update)
 	max17050_get_property(MAX17050_VCELL, &battVoltCurr);
 
 	gfx_clear_partial_grey(0x30, 1256, 24);
-	gfx_printf("%K%k Battery: %d.%d%% (%d mV) - Charge:", 0xFF303030, 0xFF888888,
+	gfx_printf("%K%k 电池: %d.%d%% (%d mV) - 充电:", 0xFF303030, 0xFF888888,
 		(battPercent >> 8) & 0xFF, (battPercent & 0xFF) / 26, battVoltCurr);
 
 	max17050_get_property(MAX17050_Current, &battVoltCurr);
@@ -100,8 +100,9 @@ void *tui_do_menu(menu_t *menu)
 	{
 		gfx_con_setcol(0xFFCCCCCC, 1, 0xFF1B1B1B);
 		gfx_con_setpos(menu->x, menu->y);
-		gfx_printf("[%kLo%kck%kpi%kck%k_R%kCM%k v%d.%d.%d%k]\n\n",
+		gfx_printf("[%kLo%kck%kpi%kck%k_R%kCM%k v%d.%d.%d%k]\n", 
 			colors[0], colors[1], colors[2], colors[3], colors[4], colors[5], 0xFFFF00FF, LP_VER_MJ, LP_VER_MN, LP_VER_BF, 0xFFCCCCCC);
+		gfx_printf("%k gzk_47汉化%k\n\n", 0xFF00FF00, 0xFFCCCCCC);
 
 		// Skip caption or seperator lines selection.
 		while (menu->ents[idx].type == MENT_CAPTION ||
@@ -152,9 +153,9 @@ void *tui_do_menu(menu_t *menu)
 		// Print help and battery status.
 		gfx_con_setpos(0,  1127);
 		if (h_cfg.emummc_force_disable)
-			gfx_printf("%kNo emuMMC config found.\n", 0xFF800000);
+			gfx_printf("%k未找到emuMMC配置。\n", 0xFF800000);
 		gfx_con_setpos(0,  1191);
-		gfx_printf("%k VOL: Move up/down\n PWR: Select option%k", 0xFF555555, 0xFFCCCCCC);
+		gfx_printf("%k 音量键: 上下移动\n 电源键: 选择选项%k", 0xFF555555, 0xFFCCCCCC);
 
 		display_backlight_brightness(h_cfg.backlight, 1000);
 
